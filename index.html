@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FixIt — что сломалось?</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@700;800&display=swap">
+<style>
+:root{
+  --navy:#13203a; --navy2:#1c2d4d; --orange:#fba311; --teal:#1f8a7e; --mint:#a8dadc;
+  --card:#edf0f5; --ink:#13203a; --muted:#53617a; --line:#c9d1de;
+  color-scheme:dark; box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--navy);color:#fff;font-family:Calibri,"Segoe UI",system-ui,sans-serif;font-size:17px;line-height:1.5}
+main{max-width:640px;margin:0 auto;padding:20px 16px 44px}
+.brand{display:flex;align-items:center;gap:12px;margin-bottom:22px}
+.brand b{font-size:1.5rem}
+h1,h2{font-family:"Roboto Slab","Rockwell","Georgia",serif;margin:0;letter-spacing:.01em}
+h1{font-size:2.1rem;line-height:1.15}
+.sub{color:var(--orange);font-style:italic;font-size:1.15rem;margin:6px 0 18px}
+h2{font-size:1.4rem;margin:30px 0 12px}
+
+.chat{background:var(--card);color:var(--ink);border-radius:22px;padding:14px;border:6px solid #264653}
+.msgs{display:flex;flex-direction:column;gap:10px;max-height:340px;overflow-y:auto;padding:4px 2px 8px}
+.m{max-width:86%;padding:10px 14px;border-radius:16px}
+.bot{background:#fff;align-self:flex-start;border-bottom-left-radius:4px}
+.me{background:var(--teal);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 10px}
+.chip{font:inherit;font-weight:700;background:var(--orange);color:var(--navy);border:0;border-radius:12px;padding:9px 14px;cursor:pointer}
+.chip.alt{background:var(--mint)}
+.row{display:flex;gap:8px}
+.row input{flex:1;min-width:0;font:inherit;color:var(--ink);background:#fff;border:2px solid var(--line);border-radius:14px;padding:12px 14px}
+.row input:focus{outline:3px solid var(--orange);border-color:var(--orange)}
+.send{font:inherit;font-weight:700;background:var(--navy);color:#fff;border:0;border-radius:14px;padding:0 18px;cursor:pointer}
+button:focus-visible{outline:3px solid var(--orange);outline-offset:2px}
+
+.item{background:var(--card);color:var(--ink);border-radius:16px;margin-bottom:10px;overflow:hidden;border:3px solid transparent}
+.item.open{border-color:var(--orange)}
+.head{all:unset;box-sizing:border-box;display:flex;width:100%;gap:12px;align-items:center;padding:14px;cursor:pointer}
+.head:focus-visible{outline:3px solid var(--orange);outline-offset:-3px}
+.ic{flex:none;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-size:1.3rem;color:#fff}
+.t{flex:1;font-weight:700}
+.t small{display:block;font-weight:400;color:var(--muted);font-size:.9rem}
+.chev{color:var(--muted);transition:transform .2s}
+.item.open .chev{transform:rotate(180deg)}
+.body{display:none;padding:0 16px 18px}
+.item.open .body{display:block}
+ol{list-style:none;counter-reset:s;margin:0 0 12px;padding:0}
+li{counter-increment:s;position:relative;padding-left:40px;margin-bottom:12px;min-height:28px}
+li::before{content:counter(s);position:absolute;left:0;top:0;width:28px;height:28px;border-radius:50%;background:var(--teal);color:#fff;font-weight:700;font-size:.9rem;display:grid;place-items:center}
+.box{border-radius:12px;padding:12px 14px;margin-top:10px;font-size:.97rem}
+.check{background:var(--mint)}
+.note{background:var(--orange)}
+.fb{margin-top:14px;display:grid;gap:8px}
+.q{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:700}
+.q span{flex:1 1 100%}
+.q button{font:inherit;font-weight:700;min-width:84px;padding:9px 16px;border-radius:12px;cursor:pointer;border:2px solid var(--navy);background:#fff;color:var(--navy)}
+.q button.on{background:var(--orange);border-color:var(--orange)}
+.item{scroll-margin-top:12px}
+.row input.vh{position:absolute;width:1px;height:1px;padding:0;border:0;opacity:0;overflow:hidden;pointer-events:none}
+.attach{display:flex;align-items:center;user-select:none;font:inherit;font-size:1.3rem;background:#fff;border:2px solid var(--line);border-radius:14px;padding:0 13px;cursor:pointer}
+.prev{display:flex;align-items:center;gap:10px;margin:0 0 8px}
+.prev[hidden]{display:none}
+.prev img{height:52px;border-radius:8px}
+.thumb{display:block;max-width:200px;max-height:150px;border-radius:10px;margin-bottom:6px}
+.recog{background:#fff;border-left:6px solid var(--orange);margin:0 0 12px}
+.recog div{margin-top:4px}
+.badge{background:var(--orange);color:var(--navy);font-weight:700;font-size:.88rem;padding:6px 14px}
+.flash{animation:pop .7s ease-out}
+@keyframes pop{0%{transform:scale(.96);box-shadow:0 0 0 0 rgba(251,163,17,.8)}60%{transform:scale(1.01);box-shadow:0 0 0 14px rgba(251,163,17,0)}100%{transform:none}}
+@media (prefers-reduced-motion:reduce){.flash{animation:none}}
+footer{color:var(--mint);font-size:.88rem;margin-top:24px}
+</style>
+</head>
+<body>
+<main>
+  <div class="brand">
+    <svg width="52" height="52" viewBox="0 0 64 64" role="img" aria-label="Логотип FixIt">
+      <rect width="64" height="64" rx="14" fill="#fba311"/>
+      <g transform="rotate(-45 32 32)" fill="#13203a">
+        <rect x="28" y="26" width="8" height="30" rx="3"/>
+        <circle cx="32" cy="17" r="11"/>
+      </g>
+      <rect x="27" y="2" width="10" height="13" fill="#fba311" transform="rotate(-45 32 32)"/>
+      <circle cx="47" cy="47" r="10" fill="#1f8a7e" stroke="#fba311" stroke-width="2"/>
+      <path d="M42 47l4 4 6-8" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <b>FixIt</b>
+  </div>
+
+  <h1>Что сломалось?</h1>
+  <p class="sub">Расскажите своими словами</p>
+
+  <section class="chat" aria-label="ИИ-помощник">
+    <div class="msgs" id="msgs" aria-live="polite"></div>
+    <div class="chips" id="chips"></div>
+    <div class="prev" id="prev" hidden></div>
+    <div class="row">
+      <label class="attach" id="attach" for="file" role="button" tabindex="0" aria-label="Прикрепить фото или скриншот">📎</label><input type="file" id="file" class="vh" accept="image/*">
+      <input id="inp" type="text" placeholder="Расскажите, что не работает…" aria-label="Опишите проблему" autocomplete="off">
+      <button class="send" id="send" type="button">Найти</button>
+    </div>
+  </section>
+
+  <h2>Решения</h2>
+  <div id="list"></div>
+
+  <footer>FixIt · прототип · инструкции для Windows 10 и 11</footer>
+</main>
+
+<script>
+var P = [
+ { id:"office", icon:"📄", color:"#e76f51", title:"Не установлен Microsoft Office", sub:"Нет Word, Excel или PowerPoint",
+   stems:["office","офис","ворд","word","excel","эксел","powerpoint","презентац","документ"],
+   steps:["Откройте сайт office.com и войдите в аккаунт Microsoft. Если аккаунта нет, создайте его.","Нажмите «Установить приложения» и скачайте установщик.","Запустите скачанный файл и дождитесь окончания установки.","Откройте Word, чтобы проверить, что он запускается."],
+   check:"Word открывается и можно создать новый документ.",
+   note:"Без установки можно пользоваться Word, Excel и PowerPoint в браузере на office.com. Для полной версии нужна лицензия или подписка." },
+ { id:"net", icon:"📶", color:"#1f8a7e", title:"Нет интернета", sub:"Сайты не открываются",
+   stems:["интернет","сеть","сети","wifi","wi-fi","вай","фай","роутер","соединен","подключ"],
+   steps:["Проверьте, не включён ли режим «В самолёте».","На ноутбуке включите Wi-Fi и подключитесь к своей сети.","Проверьте, работает ли интернет на другом устройстве, например на телефоне.","Выключите роутер на 30 секунд, включите снова и перезагрузите компьютер.","Если не помогло: Параметры → Сеть и Интернет → Диагностика сетевых неполадок."],
+   check:"Любой сайт открывается в браузере.",
+   note:"Если интернета нет и на телефоне, проблема в роутере или у провайдера. Позвоните в поддержку провайдера." },
+ { id:"drivers", icon:"🧩", color:"#5b6b8c", title:"Нужны драйверы", sub:"Устройство не работает или определяется неверно",
+   stems:["драйвер","driver","видеокарт","звук","устройств","определ","принтер","мыш","клавиатур"],
+   steps:["Узнайте точную модель ноутбука (наклейка на корпусе) или компонента (Диспетчер устройств).","Найдите официальный сайт производителя: введите в поиске «модель + support».","В разделе «Драйверы» выберите свою версию Windows и скачайте нужный драйвер.","Запустите установщик, следуйте подсказкам и перезагрузите компьютер."],
+   check:"В Диспетчере устройств нет значков с жёлтым восклицательным знаком.",
+   note:"Скачивайте драйверы только с сайта производителя. Файлы с других сайтов могут содержать вирусы." }
+];
+function add(id,icon,color,title,sub,stems,steps,check,note){P.push({id:id,icon:icon,color:color,title:title,sub:sub,stems:stems.split("|"),steps:steps.split("|"),check:check,note:note})}
+add("slow","🐢","#e76f51","Компьютер тормозит или зависает","Долго загружается, всё работает медленно","тормоз|завис|медлен|лаг|долго груз|глюч","Перезагрузите компьютер: «Пуск» → «Завершение работы» → «Перезагрузка».|Нажмите Ctrl+Shift+Esc, откройте «Диспетчер задач» и во вкладке «Процессы» отсортируйте список по ЦП или памяти. Закройте ненужную программу, которая грузит больше всего.|Отключите лишнее при запуске: Диспетчер задач → «Автозагрузка» → выберите программу → «Отключить».|Проверьте обновления: Параметры → Центр обновления Windows → «Проверить наличие обновлений».","Компьютер загружается быстрее, а нагрузка в Диспетчере задач не держится около 100%.","Отключайте в автозагрузке только знакомые программы. Антивирус и драйверы оставьте.");
+add("disk","💾","#2f6f9f","Диск заполнен или загружен на 100%","Мало места, диск постоянно работает","диск|место|заполнен|100%|хранилищ|память заполн","Откройте Параметры → Система → Память (или Хранилище) и посмотрите, что занимает место.|Нажмите «Временные файлы», отметьте ненужное и нажмите «Удалить файлы».|Удалите ненужные программы: Параметры → Приложения → Установленные приложения.|Перенесите фото и видео на флешку, внешний диск или в облако.","На диске C: свободно хотя бы 15-20% места, загрузка диска в Диспетчере задач заметно ниже.","Не удаляйте системные папки Windows вручную. Перед очисткой «Загрузок» проверьте, нет ли там нужных файлов.");
+add("bsod","🟦","#5b6b8c","Синий экран","Компьютер показывает синий экран и перезагружается","синий|bsod|экран смерти|stop code|критическ|перезагружается сам","Запишите или сфотографируйте код ошибки на экране, например CRITICAL_PROCESS_DIED.|Отключите все лишние устройства (флешки, принтеры) и перезагрузите компьютер.|Если ошибка появилась после установки программы, удалите её: Параметры → Приложения.|Установите обновления: Параметры → Центр обновления Windows. Обновите драйвер видеокарты с сайта производителя.|Если синий экран повторяется, обратитесь к специалисту и назовите записанный код.","Компьютер работает без синего экрана хотя бы сутки.","Частые синие экраны могут означать неисправность диска или оперативной памяти. Сохраните копии важных файлов.");
+add("sound","🔇","#1f8a7e","Нет звука","Динамики или наушники молчат","динамик|наушник|колонк|нет звука|пропал звук|тихо|громкост","Проверьте громкость и значок динамика справа внизу: он не должен быть перечёркнут. Проверьте кнопку отключения звука на клавиатуре.|Щёлкните значок динамика и выберите нужное устройство вывода: колонки или наушники.|Проверьте кабели и подключение, попробуйте другой разъём.|Щёлкните правой кнопкой по значку динамика и выберите «Устранение неполадок со звуком».|Перезагрузите компьютер. Если не помогло, обновите аудиодрайвер (см. «Нужны драйверы»).","Из динамиков слышен звук видео или музыки.","Если звук пропал сразу после обновления, попробуйте откатить драйвер: Диспетчер устройств → «Звуковые…» → Свойства → «Драйвер» → «Откатить».");
+add("printer","🖨️","#e76f51","Не работает принтер","Компьютер не видит принтер или не печатает","принтер|печат|сканер|мфу","Проверьте, что принтер включён, в нём есть бумага и нет мигающих ошибок. Проверьте кабель USB или подключение к Wi-Fi.|Откройте Параметры → Bluetooth и устройства → Принтеры и сканеры (в Windows 10: Устройства → Принтеры и сканеры).|Если принтера нет в списке, нажмите «Добавить устройство» и выберите его.|Если печать зависла: откройте очередь печати, выберите «Отменить все документы» и повторите.|Перезагрузите принтер и компьютер. При необходимости скачайте драйвер с сайта производителя принтера.","Пробная страница печатается: выберите принтер → «Свойства принтера» → «Пробная печать».","Скачивайте драйверы принтера только с официального сайта производителя.");
+add("bt","🔵","#2f6f9f","Не работает Bluetooth","Не находит наушники, мышь, колонку","bluetooth|блютуз|блютус|беспроводн","Включите Bluetooth: Параметры → Bluetooth и устройства (в Windows 10: Устройства → Bluetooth).|Убедитесь, что режим «В самолёте» выключен.|Включите устройство и переведите его в режим поиска: обычно нужно удерживать кнопку питания, пока не замигает индикатор.|Нажмите «Добавить устройство» → Bluetooth и выберите своё устройство.|Если не находит, удалите устройство из списка, подключите заново и перезагрузите компьютер.","Устройство отображается как «Подключено» и работает.","Если переключателя Bluetooth нет вообще, вероятно, нужен драйвер (см. «Нужны драйверы»).");
+add("update","🔄","#5b6b8c","Не устанавливаются обновления Windows","Центр обновления зависает или показывает ошибку","обновлен|update|центр обновления|ошибка 0x","Подождите: обновление может идти долго. Если прогресс не меняется больше часа, перезагрузите компьютер.|Освободите место на диске: для обновлений нужно не менее 10-20 ГБ.|Запустите средство устранения неполадок: Параметры → Система → Устранение неполадок → Другие средства → «Центр обновления Windows» (в Windows 10: Обновление и безопасность → Устранение неполадок).|Отключите лишние устройства (флешки, принтеры) и повторите обновление.","В Центре обновления Windows написано, что установлены все последние обновления.","Не выключайте компьютер кнопкой питания, пока на экране идёт установка обновления.");
+add("start","🔍","#1f8a7e","Не работает меню «Пуск» или поиск","Не нажимается, не вводится текст, нет результатов","пуск|поиск|меню|панель задач","Перезагрузите компьютер.|Нажмите Ctrl+Shift+Esc, найдите «Проводник» (Windows Explorer), щёлкните по нему правой кнопкой и выберите «Перезапустить».|Проверьте системные файлы: щёлкните правой кнопкой по «Пуск» → «Терминал (администратор)» или «Командная строка (администратор)», введите sfc /scannow и нажмите Enter.|Дождитесь окончания проверки и перезагрузите компьютер.","Меню «Пуск» открывается, в поиске можно набрать текст и увидеть результаты.","Вводите команду точно, как написано. Если проверка нашла ошибки и не исправила их, обратитесь к специалисту.");
+add("battery","🔋","#e76f51","Ноутбук быстро разряжается","Батарея держит мало или не заряжается","батаре|разряжа|заряд|аккумулятор","Уменьшите яркость экрана и включите экономию заряда: Параметры → Система → Питание (или Батарея) → «Режим экономии заряда».|Посмотрите, что тратит больше всего: Параметры → Система → Питание → «Использование батареи». Закройте лишнее.|Отключайте Bluetooth и Wi-Fi, когда они не нужны.|Если ноутбук не заряжается, проверьте кабель, розетку и разъём. Попробуйте другой блок питания той же модели.","Ноутбук работает от батареи дольше, а при подключении к сети индикатор заряда растёт.","Если батарее 3-4 года и больше, она могла износиться. Замену лучше доверить сервису.");
+add("heat","🌡️","#2f6f9f","Ноутбук перегревается и шумит","Горячий корпус, громко работает вентилятор","перегрев|горяч|шумит|вентилятор|кулер|греется","Поставьте ноутбук на твёрдую ровную поверхность, а не на кровать или колени. Вентиляционные отверстия не должны быть закрыты.|Закройте тяжёлые программы: Диспетчер задач → «Процессы» → отсортируйте по ЦП.|Выключите ноутбук и продуйте вентиляционные отверстия баллончиком со сжатым воздухом.|Если перегрев постоянный, обратитесь в сервис: возможно, нужно заменить термопасту.","Корпус заметно холоднее, вентилятор работает тише.","Не разбирайте ноутбук без опыта: можно потерять гарантию и повредить детали.");
+add("noboot","⏻","#5b6b8c","Компьютер не включается","Нет реакции на кнопку питания или нет изображения","не включается|не запускается|не загружается|черный экран|нет изображения|не стартует","Проверьте питание: вилку, розетку, удлинитель. Подключите зарядку ноутбука и подождите 10-15 минут.|Отключите все лишние устройства: флешки, принтеры, внешние диски.|Удерживайте кнопку питания 15-20 секунд, затем включите снова.|Если питание есть, а изображения нет: проверьте кабель монитора и выберите на мониторе нужный вход.|Если экран есть, но Windows не загружается: три раза прервите загрузку кнопкой питания, откроется среда восстановления. Выберите «Восстановление при загрузке».","Компьютер включается и доходит до рабочего стола.","Если не помогло, не разбирайте системный блок самостоятельно. Обратитесь в сервис.");
+add("hung","❄️","#1f8a7e","Программа зависла","Окно не отвечает и не закрывается","не отвечает|программа зависл|вылетает|не закрывается","Подождите 30-60 секунд: программа может быть просто занята.|Нажмите Ctrl+Shift+Esc и откройте Диспетчер задач.|Найдите зависшую программу, щёлкните по ней правой кнопкой и выберите «Снять задачу».|Запустите программу заново. Если зависает часто, обновите её или переустановите.","Зависшая программа закрылась, остальные работают как обычно.","Несохранённые данные в зависшей программе могут пропасть. Включите автосохранение там, где это возможно.");
+add("virus","🛡️","#e76f51","Реклама, вирусы, странные окна","Всплывает реклама, компьютер ведёт себя странно","вирус|реклам|всплыва|троян|зараж|подозрител","Отключите интернет, если подозреваете заражение.|Откройте «Безопасность Windows» (через поиск) → «Защита от вирусов и угроз» → «Параметры сканирования» → «Полное сканирование».|Удалите незнакомые программы: Параметры → Приложения → Установленные приложения.|В браузере удалите незнакомые расширения: меню → Расширения.|Смените важные пароли с другого, чистого устройства.","Полное сканирование не нашло угроз, реклама больше не появляется.","Не скачивайте «чистильщики» и «ускорители» с сомнительных сайтов: часто это сами вирусы. Встроенной защиты Windows обычно достаточно.");
+add("monitor","🖥️","#2f6f9f","Проблемы с экраном и монитором","Нет второго монитора, картинка растянута или размыта","монитор|разрешение|второй экран|hdmi|проектор|растянут|размыт","Проверьте кабель (HDMI или DisplayPort) с обеих сторон, включите монитор и выберите на нём нужный вход.|Нажмите Win+P и выберите режим: «Дублировать» или «Расширить».|Откройте Параметры → Система → Дисплей и нажмите «Обнаружить», если такая кнопка есть.|В том же разделе выберите разрешение с пометкой «рекомендуется».|Если не помогло, обновите драйвер видеокарты (см. «Нужны драйверы»).","Изображение есть на всех экранах, оно чёткое и не растянуто.","Выбирайте рекомендуемое разрешение: другое делает картинку размытой.");
+add("password","🔑","#5b6b8c","Забыл пароль от Windows","Не получается войти в систему","пароль|не могу войти|пин|забыл","Если вход идёт через аккаунт Microsoft: на другом устройстве откройте account.live.com/password/reset и сбросьте пароль.|Введите новый пароль на компьютере. Подключите его к интернету, чтобы пароль приняли.|Если у вас локальная учётная запись, на экране входа нажмите «Забыл пароль» (работает, если вы заранее настроили контрольные вопросы) и ответьте на вопросы.|Если ничего не помогло, может понадобиться переустановка Windows. Прежде обратитесь к специалисту, чтобы не потерять файлы.","Вы вошли в Windows с новым паролем.","Не используйте программы для «взлома» пароля: они часто содержат вирусы.");
+add("cam","📷","#e76f51","Не работает камера или микрофон","Нет изображения или не слышно голос","камер|микрофон|webcam|вебкам|не слышно|не слышат|видеозвон|zoom","Проверьте, не закрыта ли камера шторкой и не отключена ли кнопкой на клавиатуре (значок камеры или микрофона на клавишах F).|Откройте Параметры → Конфиденциальность и безопасность → Камера (или Микрофон) и включите доступ для приложений. В Windows 10: Параметры → Конфиденциальность → Камера.|В самом приложении (Zoom, Teams, браузер) выберите нужную камеру или микрофон в настройках.|Закройте другие программы, которые могут использовать камеру, и перезагрузите компьютер.","В приложении «Камера» (через поиск) видно изображение, а в Параметры → Система → Звук → Ввод шкала микрофона двигается, когда вы говорите.","Если устройство не определяется совсем, нужен драйвер (см. «Нужны драйверы»).");
+add("usb","🔌","#1f8a7e","Флешка или USB-устройство не определяется","Компьютер не видит флешку или внешний диск","флешк|usb|юсб|внешний диск|не определяется","Вставьте устройство в другой USB-порт, лучше напрямую в компьютер, а не через разветвитель.|Проверьте устройство на другом компьютере: так вы поймёте, где проблема, в устройстве или в ПК.|Откройте «Этот компьютер» и проверьте, есть ли устройство в списке. Если его нет, откройте управление дисками: правый клик на «Пуск» → «Управление дисками».|Перезагрузите компьютер и подключите устройство снова.","Флешка отображается в «Этом компьютере», файлы открываются.","Не нажимайте «Форматировать», если на флешке есть нужные файлы: при форматировании они удаляются.");
+add("kb","⌨️","#5b6b8c","Не работает клавиатура, мышь или тачпад","Не печатает или курсор не двигается","клавиатур|мышь|мыши|тачпад|курсор|не печатает","Если устройство беспроводное, замените батарейки и проверьте, что приёмник вставлен в USB.|Переподключите устройство к другому USB-порту. На ноутбуке проверьте, не отключён ли тачпад (клавиша с перечёркнутым тачпадом или Fn + клавиша F).|Тачпад включается так: Параметры → Bluetooth и устройства → Сенсорная панель (в Windows 10: Устройства → Сенсорная панель).|Перезагрузите компьютер. Если не помогло, проверьте устройство на другом ПК.","Курсор двигается, клавиши печатают в Блокноте.","Если мышь не работает, управлять можно клавишами: Win открывает «Пуск», стрелки и Enter выбирают, Alt+F4 закрывает окно.");
+add("browser","🌐","#2f6f9f","Браузер тормозит или не открывает сайты","Страницы грузятся долго или сайт не открывается","браузер|chrome|хром|яндекс|edge|вкладк|сайт не открывается","Проверьте, работает ли интернет в других программах. Если нет, см. «Нет интернета».|Закройте лишние вкладки и перезапустите браузер.|Очистите кэш: нажмите Ctrl+Shift+Delete, выберите «Изображения и другие файлы, сохранённые в кэше» и нажмите «Удалить».|Отключите ненужные расширения: меню браузера → Расширения.|Обновите браузер: меню → «О браузере» (Настройки → О браузере).","Сайты открываются быстро, браузер не зависает.","При очистке данных не отмечайте «Пароли», если не помните их.");
+add("lostfile","🗑️","#e76f51","Случайно удалил файл","Пропал документ, фото или папка","удалил|пропал файл|пропали файлы|восстановить|корзин|потерял файл","Не сохраняйте новые файлы на этот диск: так шанс вернуть файл выше.|Откройте «Корзину» на рабочем столе, найдите файл, щёлкните правой кнопкой и выберите «Восстановить».|Если файла нет в корзине, найдите его через поиск в Проводнике по названию.|Если файл был в OneDrive или Google Диске, откройте корзину в облаке и восстановите его оттуда.","Файл вернулся на прежнее место и открывается.","Программам для «восстановления» файлов доверяйте только известным производителям и скачивайте их с официальных сайтов.");
+add("openfile","📂","#1f8a7e","Не открывается файл","Windows просит выбрать программу","не открывается файл|выберите приложение|формат|pdf|rar|zip|архив|расширение|чем открыть","Посмотрите расширение файла: это буквы после точки в названии (например, .pdf, .docx, .zip). Если их не видно, в Проводнике нажмите «Вид» → «Показать» → «Расширения имён файлов».|Выберите подходящую программу: .pdf открывает браузер или Adobe Reader, .docx и .xlsx открывают Word и Excel, .zip открывает Проводник (правый клик → «Извлечь всё»).|Щёлкните файл правой кнопкой → «Открыть с помощью» → выберите программу и отметьте «Всегда использовать это приложение».|Если файл не открывается нигде, возможно, он повреждён: попросите отправить его заново.","Файл открывается двойным щелчком.","Не открывайте файлы .exe и .scr, которые пришли от незнакомых людей по почте или в мессенджере.");
+add("activate","🪪","#5b6b8c","Windows не активирована","В углу экрана надпись «Активация Windows»","активаци|водяной знак|лицензи|не активирован","Откройте Параметры → Система → Активация и посмотрите состояние.|Если есть кнопка «Устранение неполадок», нажмите её: Windows сама попробует найти причину.|Если лицензия была привязана к вашему аккаунту Microsoft, войдите в него и повторите устранение неполадок.|Если лицензии нет, купите её в Microsoft Store или у официального продавца.","В разделе «Активация» написано, что Windows активирована.","Не используйте «активаторы» и взломанные ключи из интернета: они часто содержат вирусы и нарушают лицензию.");
+add("clock","🕒","#2f6f9f","Неверные дата и время","Часы показывают не то время","дата|время|часы|часовой пояс|сбилось","Откройте Параметры → Время и язык → Дата и время.|Включите «Установить время автоматически» и «Автоматически устанавливать часовой пояс».|Нажмите «Синхронизировать сейчас» (нужен интернет).|Если время сбивается после выключения компьютера, возможно, села батарейка на материнской плате: обратитесь в сервис.","Часы показывают правильное время и не сбиваются после перезагрузки.","Неверное время может мешать открывать сайты и входить в аккаунты (ошибка сертификата). Проверьте его первым делом.");
+add("sleep","😴","#e76f51","Ноутбук сам засыпает или не просыпается","Экран гаснет слишком быстро или ПК не выходит из сна","засыпает|не просыпается|спящий|сон|гаснет экран|гибернац","Откройте Параметры → Система → Питание (Питание и батарея) → «Экран и спящий режим».|Выберите время до отключения экрана и перехода в сон отдельно для работы от сети и от батареи.|Если ноутбук не просыпается, нажмите кнопку питания на 1 секунду. Если не помогло, удерживайте её 15-20 секунд и включите снова.|Установите обновления Windows и драйвер видеокарты (см. «Нужны драйверы»).","Ноутбук засыпает через выбранное время и просыпается от нажатия клавиши.","Если на ноутбуке идёт долгая загрузка или копирование, не закрывайте крышку: он может уйти в сон и прервать процесс.");
+add("app","🎮","#1f8a7e","Не запускается программа или игра","Ничего не происходит или появляется ошибка","не запускается|игра|игру|dll|вылетает|ошибка при запуске|программа не открывается","Перезагрузите компьютер и запустите программу заново.|Щёлкните ярлык правой кнопкой → «Запуск от имени администратора».|Проверьте требования программы или игры (процессор, память, видеокарта) и сравните со своим ПК: Параметры → Система → О системе.|Обновите драйвер видеокарты и установите обновления Windows.|Удалите программу и установите заново с официального сайта.","Программа или игра запускается и работает без ошибок.","Если в ошибке упоминается отсутствующий файл .dll, не скачивайте его с сайтов-«свалок»: переустановите программу.");
+
+function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x)e.textContent=x;return e}
+var msgs=document.getElementById("msgs"),chips=document.getElementById("chips"),
+    inp=document.getElementById("inp"),list=document.getElementById("list");
+
+function say(text,cls,img){var m=el("div","m "+cls,text);if(img){var im=document.createElement("img");im.src=URL.createObjectURL(img);im.className="thumb";im.alt="Приложенное фото";m.insertBefore(im,m.firstChild)}msgs.appendChild(m);msgs.scrollTop=msgs.scrollHeight}
+function setChips(items){
+  chips.textContent="";
+  items.forEach(function(it){
+    var b=el("button","chip"+(it.alt?" alt":""),it.label);b.type="button";
+    b.onclick=function(){say(it.label,"me");it.fn()};
+    chips.appendChild(b);
+  });
+}
+function openItem(id){
+  document.querySelectorAll(".item").forEach(function(i){
+    var on=i.dataset.id===id;i.classList.toggle("open",on);
+    i.querySelector(".head").setAttribute("aria-expanded",on);
+    if(on)setTimeout(function(){i.scrollIntoView({behavior:"smooth",block:"start"})},50);
+  });
+}
+function showCode(code,meaning){var it=list.querySelector('.item[data-id="bsod"]');if(!it)return;var body=it.querySelector(".body"),old=body.querySelector(".recog");if(old)old.remove();var b=el("div","box recog");b.appendChild(el("strong","","По скриншоту распознано: "+code));if(meaning&&meaning!=="null")b.appendChild(el("div","",meaning));body.insertBefore(b,body.firstChild)}
+function pin(id){
+  var items=[].slice.call(list.children).sort(function(a,b){return a.dataset.idx-b.dataset.idx});
+  items.forEach(function(i){list.appendChild(i);var b=i.querySelector(".badge");if(b)b.remove();i.classList.remove("flash")});
+  var it=items.filter(function(i){return i.dataset.id===id})[0];
+  if(!it)return;
+  list.insertBefore(it,list.firstChild);
+  it.insertBefore(el("div","badge","✨ Подобрано помощником"),it.firstChild);
+  it.classList.add("flash");
+  openItem(id);
+}
+function suggest(p){
+  say("Похоже, вам подойдёт инструкция «"+p.title+"». Открываю её ниже. Помогло? Если нет, опишите проблему подробнее.","bot");
+  setChips([]);pin(p.id);
+}
+function menu(ids,text){
+  say(text,"bot");
+  var c=ids.map(function(id){var p=P.filter(function(x){return x.id===id})[0];
+    return {label:p.title,fn:function(){suggest(p)}}});
+  c.push({label:"Ничего не подходит",alt:true,fn:function(){
+    say("Такой инструкции пока нет в базе, мы добавим её позже. Попробуйте описать проблему другими словами.","bot");setChips([])}});
+  setChips(c);
+}
+function ask(text){
+  var s=text.toLowerCase().replace(/ё/g,"е");
+  var sc=P.map(function(p){var n=0;p.stems.forEach(function(k){if(s.indexOf(k)!==-1)n++});return {p:p,n:n}});
+  var max=Math.max.apply(null,sc.map(function(x){return x.n}));
+  if(max===0){menu(["net","slow","sound","bsod"],"Не совсем понял. Выберите похожую проблему или опишите её подробнее. Все инструкции есть в разделах ниже.");return}
+  var top=sc.filter(function(x){return x.n===max});
+  if(top.length===1)suggest(top[0].p);
+  else menu(top.map(function(x){return x.p.id}),"Уточните, пожалуйста: что именно у вас происходит?");
+}
+var hist=[],busy=false;
+var BASE=P.map(function(p){return p.id+": "+p.title+" ("+p.sub+")"}).join("\n");
+var RULES="Ты ИИ-помощник приложения FixIt. Пользователь описывает проблему с компьютером своими словами, часто неточно. "+
+"Твоя задача: выбрать подходящую инструкцию из базы ниже. Сам решения не придумывай и шаги не пересказывай, их покажет приложение. "+
+"Если запрос подходит под одну инструкцию, type=match и id. Если неясно, задай ОДИН короткий уточняющий вопрос: type=clarify, в options до 3 id возможных инструкций. "+
+"Если в базе нет подходящей инструкции, честно скажи об этом: type=none. Отвечай по-русски, просто, 1-2 предложения, без жаргона.\n"+
+"База:\n"+BASE+"\n"+
+"Иногда к сообщению приложен скриншот или фото экрана. По картинке ты умеешь распознавать ТОЛЬКО синий экран Windows (BSOD). Если на картинке синий экран, прочитай стоп-код или текст ошибки (например CRITICAL_PROCESS_DIED, MEMORY_MANAGEMENT, INACCESSIBLE_BOOT_DEVICE) и верни type=match, id=bsod; в JSON добавь поле code с этим кодом и поле meaning с объяснением простыми словами в одну фразу. Если код не читается, не выдумывай его: code=null и попроси сфотографировать экран чётче. Если на картинке не синий экран, честно скажи, что по картинке пока можешь распознать только синий экран, и попроси описать проблему словами (type=none). "+
+"Ответь ТОЛЬКО JSON без пояснений и без markdown: {\"type\":\"match|clarify|none\",\"id\":\"id или null\",\"options\":[\"id\"],\"reply\":\"текст для пользователя\"}";
+function byId(id){return P.filter(function(p){return p.id===id})[0]}
+async function aiAsk(v,img){
+  if(!(window.claude&&claude.use))return false;
+  var sample=await claude.use("sample");
+  if(!sample)return false;
+  var dialog=hist.slice(-6).concat(["Пользователь: "+v]).join("\n");
+  var out=await sample(RULES+"\n\nДиалог:\n"+dialog,Object.assign({cache:false,modelTier:img?"default":"quick"},img?{images:[img]}:{}));
+  var t=out.text.replace(/```json|```/g,"");
+  var r=JSON.parse(t.slice(t.indexOf("{"),t.lastIndexOf("}")+1));
+  hist.push("Пользователь: "+v);hist.push("Помощник: "+r.reply);
+  setChips([]);
+  if(r.type==="match"&&byId(r.id)){say(r.reply,"bot");pin(r.id);if(r.id==="bsod"&&r.code&&r.code!=="null")showCode(r.code,r.meaning)}
+  else if(r.type==="clarify"){
+    say(r.reply,"bot");
+    var c=(r.options||[]).filter(byId).map(function(id){var p=byId(id);return {label:p.title,fn:function(){suggest(p)}}});
+    setChips(c);
+  } else say(r.reply,"bot");
+  return true;
+}
+async function submit(){
+  var v=inp.value.trim();var img=shot;if((!v&&!img)||busy)return;if(!v)v="Вот скриншот ошибки.";
+  say(v,"me",img);inp.value="";clearShot();busy=true;
+  var th=el("div","m bot","Думаю…");msgs.appendChild(th);msgs.scrollTop=msgs.scrollHeight;
+  var ok=false;
+  try{ok=await aiAsk(v,img)}catch(e){ok=false}
+  th.remove();busy=false;
+  if(!ok){if(img)say("Не получилось разобрать фото. Опишите ошибку словами или попробуйте ещё раз.","bot");else ask(v)}
+}
+document.getElementById("send").onclick=submit;
+var shot=null,fileEl=document.getElementById("file"),prev=document.getElementById("prev"),attach=document.getElementById("attach");
+attach.onkeydown=function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();fileEl.click()}};
+function addFile(f){if(!f)return;shrink(f).then(function(b){shot=b;showPrev()}).catch(function(){say("Не удалось открыть фото. Попробуйте другое.","bot")})}
+fileEl.addEventListener("change",function(){var f=fileEl.files[0];fileEl.value="";addFile(f)});
+document.addEventListener("paste",function(e){var items=[].slice.call((e.clipboardData&&e.clipboardData.items)||[]);var it=items.filter(function(i){return i.type.indexOf("image")===0})[0];if(it)addFile(it.getAsFile())});
+function shrink(f){return new Promise(function(res,rej){var u=URL.createObjectURL(f),im=new Image();im.onload=function(){var s=Math.min(1,1600/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext("2d").drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);c.toBlob(function(b){b?res(b):rej()},"image/jpeg",0.85)};im.onerror=function(){res(f)};im.src=u})}
+function showPrev(){prev.textContent="";if(!shot){prev.hidden=true;return}var im=document.createElement("img");im.src=URL.createObjectURL(shot);im.alt="Приложенное фото";var x=el("button","chip alt","Убрать фото");x.type="button";x.onclick=clearShot;prev.appendChild(im);prev.appendChild(x);prev.hidden=false}
+function clearShot(){shot=null;showPrev()}
+inp.addEventListener("keydown",function(e){if(e.key==="Enter")submit()});
+
+function survey(q){
+  var row=el("div","q");row.appendChild(el("span","",q));
+  ["Да","Нет"].forEach(function(l){
+    var b=el("button","",l);b.type="button";
+    b.onclick=function(){Array.prototype.forEach.call(row.querySelectorAll("button"),function(x){x.classList.remove("on")});b.classList.add("on")};
+    row.appendChild(b);
+  });
+  return row;
+}
+function build(p){
+  var it=el("div","item");it.dataset.id=p.id;it.dataset.idx=P.indexOf(p);
+  var h=el("button","head");h.type="button";h.setAttribute("aria-expanded","false");
+  var ic=el("span","ic",p.icon);ic.style.background=p.color;
+  var t=el("span","t",p.title);t.appendChild(el("small","",p.sub));
+  h.appendChild(ic);h.appendChild(t);h.appendChild(el("span","chev","▾"));
+  var b=el("div","body");var ol=document.createElement("ol");
+  p.steps.forEach(function(s){ol.appendChild(el("li","",s))});b.appendChild(ol);
+  var c=el("div","box check");c.appendChild(el("strong","","Как проверить: "));c.appendChild(document.createTextNode(p.check));b.appendChild(c);
+  var n=el("div","box note");n.appendChild(el("strong","","⚠ Осторожно: "));n.appendChild(document.createTextNode(p.note));b.appendChild(n);
+  var fb=el("div","fb");fb.appendChild(survey("Помогло ли решение?"));fb.appendChild(survey("Понятна ли инструкция?"));b.appendChild(fb);
+  h.onclick=function(){openItem(it.classList.contains("open")?"":p.id)};
+  it.appendChild(h);it.appendChild(b);return it;
+}
+P.forEach(function(p){list.appendChild(build(p))});
+
+say("Привет! Я помощник FixIt. Расскажите, что не работает, и я подскажу подходящую инструкцию.","bot");
+setChips(["net","slow","sound","bsod"].map(function(id){var p=byId(id);return {label:p.title,fn:function(){suggest(p)}}}));
+</script>
+</body>
+</html>
